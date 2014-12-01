@@ -1,7 +1,7 @@
 " Vim indent file
 " Language:    Coq
 " Maintainer:  IjvLHsoZ6L
-" Last Change: 2014 Nov 18
+" Last Change: 2014 Dec 1
 
 " Only load this indent file when no other was loaded.
 if exists('b:did_indent')
@@ -102,4 +102,5 @@ function GetCoqIndent()
     endtry
 
   endif
+
 endfunction
