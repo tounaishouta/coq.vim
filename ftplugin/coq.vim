@@ -4,7 +4,7 @@
 " Last Change: 2014 Dec 1
 
 " Only do this when not done yet for this buffer
-if exists("b:did_ftplugin")
+if exists('b:did_ftplugin')
   finish
 endif
 let b:did_ftplugin = 1
@@ -28,16 +28,18 @@ function! s:runtocursor()
 
   let output = system('coqtop -emacs', input)
 
+  let last = ''
   for line in split(output, '\m\_\s*<prompt>.\{-}</prompt>\_\s*')
-    let last = line
+    if !empty(line)
+      let last = line
+    endif
   endfor
 
-  let cur = winnr()
+  let curbuf = bufnr('%')
 
-  let winname = '__coq_ide__'
-  let nr = bufwinnr(winname)
+  let nr = bufwinnr('__coq_ide__')
   if nr == -1
-    silent! execute 10 'split' winname
+    silent! execute 10 'split __coq_ide__'
     setlocal buftype=nofile
     setlocal noswapfile
     setlocal nolist
@@ -46,9 +48,9 @@ function! s:runtocursor()
   endif
 
   silent! execute '%delete'
-  call append(0, split(last, '\n'))
+  call append(0, split(last, "\n"))
   call cursor(1, 1)
 
-  execute cur 'wincmd w'
+  execute bufwinnr(curbuf) 'wincmd w'
 
 endfunction
