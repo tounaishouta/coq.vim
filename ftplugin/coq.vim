@@ -42,6 +42,7 @@ function! s:runtocursor()
     silent! execute 10 'split __coq_ide__'
     setlocal buftype=nofile
     setlocal noswapfile
+    setlocal nonumber
     setlocal nolist
   else
     execute nr 'wincmd w'
