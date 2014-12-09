@@ -16,30 +16,25 @@ command! CoqRunToCursor call <sid>runtocursor()
 
 function! s:runtocursor()
 
-  if &autowrite
-    write
-  endif
-
   let input = join(getline(1, '.'), "\n")
 
-  if empty(input)
-    return
-  endif
+  let output = split(system('coqtop', input), '\v\n\zs(\w+ \< )\1*')
 
-  let output = system('coqtop -emacs', input)
-
+  " get last non-empty line of output
   let last = ''
-  for line in split(output, '\m\_\s*<prompt>.\{-}</prompt>\_\s*')
-    if !empty(line)
+  for line in output
+    if line !~ '\v^\_\s*$'
       let last = line
     endif
   endfor
+  let last = substitute(last, '\v^\_\s*', '', '')
+  let last = substitute(last, '\v\_\s*$', '', '')
 
   let curbuf = bufnr('%')
 
   let nr = bufwinnr('__coq_ide__')
   if nr == -1
-    silent! execute 10 'split __coq_ide__'
+    silent! execute '10split' '__coq_ide__'
     setlocal buftype=nofile
     setlocal noswapfile
     setlocal nonumber
@@ -49,7 +44,8 @@ function! s:runtocursor()
   endif
 
   silent! execute '%delete'
-  call append(0, split(last, "\n"))
+  call append(0, split(last, '\n'))
+  silent! execute '$delete'
   call cursor(1, 1)
 
   execute bufwinnr(curbuf) 'wincmd w'
