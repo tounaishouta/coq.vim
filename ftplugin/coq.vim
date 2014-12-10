@@ -18,12 +18,12 @@ function! s:runtocursor()
 
   let input = join(getline(1, '.'), "\n")
 
-  let output = split(system('coqtop', input), '\v\n\zs(\w+ \< )\1*')
+  let output = split(system('coqtop', input), '\v\n\zs((\w|'')+ \< )\1*')
 
   " get last non-empty line of output
   let last = ''
   for line in output
-    if line !~ '\v^\_\s*$'
+    if line !~ '\v^\_s*$'
       let last = line
     endif
   endfor
