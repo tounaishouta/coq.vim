@@ -1,7 +1,8 @@
 " Vim indent file
 " Language:    Coq
 " Maintainer:  IjvLHsoZ6L
-" Last Change: 2014 Dec 1
+" Last Change: 2014 Dec 15
+" License:     This file is placed in the public domain.
 
 " Only load this indent file when no other was loaded.
 if exists('b:did_indent')

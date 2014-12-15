@@ -1,7 +1,8 @@
 " Vim syntax file
 " Language:    Coq
 " Maintainer:  IjvLHsoZ6L
-" Last Change: 2014 Nov 18
+" Last Change: 2014 Dec 15
+" License:     This file is placed in the public domain.
 
 if exists('b:current_syntax')
   finish

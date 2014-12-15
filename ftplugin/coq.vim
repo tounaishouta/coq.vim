@@ -1,13 +1,18 @@
-" Vim plugin file
+" Call coqtop from vim
 " Language:    Coq
 " Maintainer:  IjvLHsoZ6L
-" Last Change: 2014 Dec 1
+" Last Change: 2014 Dec 15
+" License:     This file is placed in the public domain.
 
 " Only do this when not done yet for this buffer
 if exists('b:did_ftplugin')
   finish
 endif
 let b:did_ftplugin = 1
+
+" save cpoptions
+let s:saved_cpoptions = &cpoptions
+set cpoptions&vim
 
 " optional key bind
 nnoremap <buffer> <silent> ,, :CoqRunToCursor<CR>
@@ -51,3 +56,7 @@ function! s:runtocursor()
   execute bufwinnr(curbuf) 'wincmd w'
 
 endfunction
+
+" restore cpoptions
+let &cpoptions = s:saved_cpoptions
+unlet s:saved_cpoptions
