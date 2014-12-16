@@ -7,16 +7,15 @@ A simple Vim plugin for the Coq Proof Assistant.
 
 Description
 -----------
-When editing a coq file (filename: `*.v`) whithin Vim,
+When editing a Coq file (filename: `*.v`) whithin Vim,
 this plugin provides the function of "Go to cursol" command of CoqIde,
-that is, get lines to the cursol line,
-run `coqtop` command with the lines,
-analize the output from `coqtop`, and
-display it a new split window.
+that is,
+run `coqtop` command with lines to cursol, and
+display the output in a new split window.
 
 Usage
 -----
-The above function is provided as Ex command:
+This function is provided as Ex command:
 
     :CoqRunToCursol
 
@@ -37,6 +36,8 @@ or place this plugin somewhere and write in `.vimrc`
 License
 -------
 This plugin is placed in the public domain.
+The indent files is a copy of http://www.vim.org/scripts/script.php?script_id=2079 .
+The syntax files is a copy of http://www.vim.org/scripts/script.php?script_id=2063 .
 
 Author
 ------
@@ -45,3 +46,4 @@ IjvLHsoZ6L [tounai.shouta@gmail.com]
 History
 -------
 2014 Dec 15: write README.md
+2014 Dec 16: copied indent and syntax files from vim-scripts
