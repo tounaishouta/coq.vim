@@ -1,107 +1,147 @@
 " Vim indent file
-" Language:    Coq
-" Maintainer:  IjvLHsoZ6L
-" Last Change: 2014 Dec 15
-" License:     This file is placed in the public domain.
+" Language:     Coq
+" Maintainer: 	Vincent Aravantinos <vincent.aravantinos@gmail.com>
+" Thanks:       Some functions were inspired by the ocaml indent file
+"               written by Jean-Francois Yuen, Mike Leary and Markus Mottl
+" Last Change: 2007 Dec 2  - Bugfix.
+"              2007 Nov 28 - Handle proofs that do not start with 'Proof'.
+"              2007 Nov 27 - Initial version. 
 
 " Only load this indent file when no other was loaded.
-if exists('b:did_indent')
+if exists("b:did_indent")
   finish
 endif
 let b:did_indent = 1
 
 setlocal expandtab
 setlocal indentexpr=GetCoqIndent()
-setlocal indentkeys=!^F,o,O
-setlocal indentkeys+=0=end,0=Qed,0=End
-setlocal indentkeys+=\|,),},]
+setlocal indentkeys=o,O,0=.,0=end,0=End,0=in,0=\|,0=Qed,0=Defined,0=Abort,0=Admitted,0},0)
 setlocal nolisp
 setlocal nosmartindent
 
+" Comment handling
+if !exists("no_coq_comments")
+  if (has("comments"))
+    setlocal comments=srn:(*,mb:*,exn:*)
+    setlocal fo=cqort
+  endif
+endif
+
 " Only define the function once.
-if exists('*GetCoqIndent')
+if exists("*GetCoqIndent")
   finish
 endif
 
-function! s:matchcount(line, pat)
-  let mcount = 0
-  let mstart = 0
-  while 1
-    let mend = matchend(a:line, a:pat, mstart)
-    if mend == -1
-      return mcount
-    endif
-    let mcount += 1
-    let mstart = mend
-  endwhile
-endfunction
+let s:inside_proof = 0
 
-function! s:prevmatch(lnum, pat, negpat)
-  let lnum = a:lnum
-  let stack = 1
-  while 1
-    if lnum == 0
-      throw 'prevmatch: Not found.'
-    endif
-    let stack -= s:matchcount(getline(lnum), a:pat)
-    let stack += s:matchcount(getline(lnum), a:negpat)
-    if stack == 0
+" Some useful patterns
+let s:vernac = '\C\<\%(Abort\|About\|Add\|Admitted\|Arguments\|Axiom\|Back\|Bind\|Canonical\|Cd\|Check\|Close\|Coercion\|CoFixpoint\|CoInductive\|Combined\|Conjecture\|Corollary\|Declare\|Defined\|Definition\|Delimit\|Derive\|Drop\|End\|Eval\|Example\|Existential\|Export\|Extract\|Extraction\|Fact\|Fixpoint\|Focus\|Function\|Functional\|Goal\|Hint\|Hypothes[ie]s\|Identity\|Implicit\|Import\|Inductive\|Infix\|Inspect\|Lemma\|Let\|Load\|Locate\|Ltac\|Module\|Mutual\|Notation\|Opaque\|Open\|Parameters\=\|Print\|Program\|Proof\|Proposition\|Pwd\|Qed\|Quit\|Record\|Recursive\|Remark\|Remove\|Require\|Reserved\|Reset\|Restart\|Restore\|Resume\|Save\|Scheme\|Search\%(About\|Pattern\|Rewrite\)\=\|Section\|Set\|Show\|Structure\|SubClass\|Suspend\|Tactic\|Test\|Theorem\|Time\|Transparent\|Undo\|Unfocus\|Unset\|Variables\?\|Whelp\|Write\)\>'
+let s:tactic = '\C\<\%(absurd\|apply\|assert\|assumption\|auto\|case_eq\|change\|clear\%(body\)\?\|cofix\|cbv\|compare\|compute\|congruence\|constructor\|contradiction\|cut\%(rewrite\)\?\|decide\|decompose\|dependant\|destruct\|discriminate\|do\|double\|eapply\|eassumption\|econstructor\|elim\%(type\)\?\|equality\|evar\|exact\|eexact\|exists\|f_equal\|fold\|functional\|generalize\|hnf\|idtac\|induction\|info\|injection\|instantiate\|intros\?\|intuition\|inversion\%(_clear\)\?\|lapply\|left\|move\|omega\|pattern\|pose\|proof\|quote\|red\|refine\|reflexivity\|rename\|repeat\|replace\|revert\|rewrite\|right\|ring\|set\|simple\?\|simplify_eqsplit\|split\|subst\|stepl\|stepr\|symmetry\|transitivity\|trivial\|try\|unfold\|vm_compute'
+
+    " Skipping pattern, for comments
+    " (stolen from indent/ocaml.vim, thanks to the authors)
+    function s:GetLineWithoutFullComment(lnum)
+      let lnum = prevnonblank(a:lnum - 1)
+      let previousline = substitute(getline(lnum), '(\*.*\*)\s*$', '', '')
+      while previousline =~ '^\s*$' && lnum > 0
+        let lnum = prevnonblank(lnum - 1)
+        let previousline = substitute(getline(lnum), '(\*.*\*)\s*$', '', '')
+      endwhile
       return lnum
-    endif
-    let lnum = prevnonblank(lnum - 1)
-  endwhile
-endfunction
+    endfunction
 
-function GetCoqIndent()
+    " Indent of a previous match
+    function s:indent_of_previous(patt)
+      return indent(search(a:patt, 'bW'))
+    endfunction
 
-  let lnum = v:lnum
-  let line = getline(lnum)
+    " Indent pairs
+    function s:indent_of_previous_pair(pstart, pmid, pend)
+      call search(a:pend, 'bW')
+      return indent(searchpair(a:pstart, a:pmid, a:pend, 'bWn', 'synIDattr(synID(line("."), col("."), 0), "name") =~? "string\\|comment"'))
+    endfunction
 
-  let plnum = prevnonblank(lnum - 1)
-  let pline = getline(plnum)
+    " Main function
+    function GetCoqIndent()
+      " Find a non-commented currentline above the current currentline.
+      let lnum = s:GetLineWithoutFullComment(v:lnum)
 
-  if plnum == 0
-    return 0
+      " At the start of the file use zero indent.
+      if lnum == 0
+        return 0
+      endif
 
-  elseif line =~ '\v\C^\s*<end>'
-    return indent(s:prevmatch(plnum, '\v\C<match>', '\v\C<end>'))
+      let ind = indent(lnum)
+      let previousline = substitute(getline(lnum), '(\*.*\*)\s*$', '', '')
 
-  elseif line =~ '\v\C^\s*<Qed>'
-    return indent(s:prevmatch(plnum, '\v\C<Proof>', '\v\C<Qed>'))
+      let currentline = getline(v:lnum)
 
-  elseif line =~ '\v\C^\s*<End>'
-    return indent(s:prevmatch(plnum, '\v\C<Section>', '\v\C<End>'))
+      " current line begins with '.':
+      if currentline =~ '^\s*\.'
+        return s:indent_of_previous(s:vernac)
 
-  elseif line =~ '\v^\s*\|'
-    let pmlnum = s:prevmatch(plnum, '\v\C<match>|<Inductive>', '\v\C<end>')
-    let pmline = getline(pmlnum)
-    if pmline =~ '\v\C^\s*<match>'
-      return indent(pmlnum)
-    else
-      return indent(pmlnum) + &shiftwidth
-    endif
+        " current line begins with 'end':
+      elseif currentline =~ '\C^\s*end\>'
+        return s:indent_of_previous_pair('\<match\>', '','\<end\>')
 
-  elseif line =~ '\v^\s*\)'
-    return indent(s:prevmatch(plnum, '\v\(', '\v\)'))
+        " current line begins with 'in':
+      elseif currentline =~ '^\s*\<in\>'
+        return s:indent_of_previous_pair('\<let\>', '','\<in\>')
 
-  elseif line =~ '\v^\s*\}'
-    return indent(s:prevmatch(plnum, '\v\{', '\v\}'))
+        " current line begins with '|':
+      elseif currentline =~ '^\s*|'
+        return ind
+        
+        " start of proof
+      elseif previousline =~ '^\s*Proof\.$'
+        let s:inside_proof = 1
+        return ind + &sw
 
-  elseif line =~ '\v^\s*\]'
-    return indent(s:prevmatch(plnum, '\v\[', '\v\]'))
+        " end of proof
+      elseif currentline =~ '^\s*}'
+        return s:indent_of_previous_pair('{','','}')
+      elseif currentline =~ '^\s*)'
+        return s:indent_of_previous_pair('(','',')')
+      elseif currentline =~ '\<\%(Qed\|Defined\|Abort\|Admitted\)\>'
+        let s:inside_proof = 0
+        return s:indent_of_previous(s:vernac.'\&\%(\<\%(Qed\|Defined\|Abort\|Admitted\)\>\)\@!')
 
-  elseif pline !~ '\v(\.|;)\s*$'
-    return indent(plnum) + &shiftwidth
+        " previous line begins with 'Section':
+      elseif previousline =~ '^\s*Section\>'
+        return ind + &sw
 
-  else
-    try
-      return indent(s:prevmatch(plnum,
-            \ '\v\C<Proof>|<Section>|\(|\{|\[',
-            \ '\v\C<Qed>|<End>|\)|\}|\]')) + &shiftwidth
-    catch 'prevmatch: Not found.'
-      return 0
-    endtry
+        " current line begins with 'End':
+      elseif currentline =~ '^\s*End\>'
+        return ind - &sw
 
-  endif
+        " previous line has the form '|...'
+      elseif previousline =~ '|\%(.\%(\.\|end\)\@!\)*$'
+        return ind + &sw + &sw
 
-endfunction
+        " unterminated vernacular sentences
+      elseif previousline =~ s:vernac.'.*[^.]$' && previousline !~ '^\s*$'
+        return ind + &sw
+
+        " back to normal indent after lines ending with '.'
+      elseif previousline =~ '\.$'
+        if (synIDattr(synID(line('.')-1,col('.'),0),"name") =~? '\cproof\|tactic')
+          return ind
+        else
+          return s:indent_of_previous(s:vernac)
+        endif
+
+        " previous line ends with 'with'
+      elseif previousline =~ '\<with$'
+        return ind + &sw
+
+        " unterminated 'let ... in'
+      elseif previousline =~ '\<let\>\%(.\%(\<in\>\)\@!\)*$'
+        return ind + &sw
+
+        " else
+      else
+        return ind
+      endif
+    endfunction
+
+    " vim:sw=2
