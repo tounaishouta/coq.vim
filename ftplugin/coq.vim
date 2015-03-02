@@ -1,6 +1,6 @@
 " Call coqtop from vim
 " Language:    Coq
-" Maintainer:  IjvLHsoZ6L
+" Maintainer:  TOUNAI Shouta <tounai.shouta@gmail.com>
 " Last Change: 2014 Dec 15
 " License:     This file is placed in the public domain.
 

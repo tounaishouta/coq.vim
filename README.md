@@ -27,7 +27,7 @@ Install
 -------
 Write in `.vimrc`
 
-    NeoBundle 'IjvLHsoZ6L/coq.vim'
+    NeoBundle 'tounaishouta/coq.vim'
 
 or place this plugin somewhere and write in `.vimrc`
 
@@ -41,9 +41,10 @@ The syntax files is a copy of http://www.vim.org/scripts/script.php?script_id=20
 
 Author
 ------
-IjvLHsoZ6L [tounai.shouta@gmail.com]
+TOUNAI Shouta [tounai.shouta@gmail.com]
 
 History
 -------
 2014 Dec 15: write README.md
 2014 Dec 16: copied indent and syntax files from vim-scripts
+2015 Mar 02: change user name
