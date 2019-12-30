@@ -8,20 +8,20 @@ A simple Vim plugin for the Coq Proof Assistant.
 Description
 -----------
 When editing a Coq file (filename: `*.v`) whithin Vim,
-this plugin provides the function of "Go to cursol" command of CoqIde,
+this plugin provides the function of "Go to cursor" command of CoqIde,
 that is,
-run `coqtop` command with lines to cursol, and
+run `coqtop` command with lines to cursor, and
 display the output in a new split window.
 
 Usage
 -----
 This function is provided as Ex command:
 
-    :CoqRunToCursol
+    :CoqRunToCursor
 
 I recommend to write a key bind in `.vimrc`, like:
 
-    autocommand Filetype coq nnoremap ,, :CoqRunToCursol<CR>
+    autocmd Filetype coq nnoremap ,, :CoqRunToCursor<CR>
 
 Install
 -------
